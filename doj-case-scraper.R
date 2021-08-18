@@ -1,7 +1,6 @@
 # install pkg deps
 install.packages(
   pkgs = c("stringi", "rvest", "lubridate", "jsonlite", "purrr", "magrittr", "tibble", "tidyr", "dplyr"),
-  lib = path.expand("./cache"),
   dependencies = c("Depends", "Imports", "LinkingTo")
 )
 
