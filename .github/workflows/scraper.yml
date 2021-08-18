@@ -1,4 +1,4 @@
-name: Visualize latest DMARC run
+name: Daily scraper of DoJ Capitol Breach Cases
 
 on:
   workflow_dispatch:
