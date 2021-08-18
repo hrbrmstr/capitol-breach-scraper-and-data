@@ -9,6 +9,12 @@
 
 .libPaths("cache")
 
+install.packages(
+  pkgs = "stringi",
+  lib = path.expand("./cache"),
+  dependencies = c("Depends", "Imports", "LinkingTo")
+)
+
 library(stringi, include.only = c("stri_split_regex", "stri_match_first_regex", "stri_trans_totitle"))
 library(rvest, include.only = c("read_html", "html_nodes", "html_node", "html_text"))
 library(lubridate, include.only = c("year", "round_date", "parse_date_time", "year<-"))
