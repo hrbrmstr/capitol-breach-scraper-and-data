@@ -1,7 +1,30 @@
-library(stringi)
-library(rvest)
-library(lubridate)
-library(tidyverse)
+# Setup cache dir on a compatible Linux box with:
+#
+# .libPaths("cache", include.site = FALSE)
+# install.packages(
+#   pkgs = c("stringi", "rvest", "lubridate", "jsonlite", "purrr", "magrittr", "tibble", "tidyr", "dplyr"),
+#   lib = path.expand("./cache"),
+#   dependencies = c("Depends", "Imports", "LinkingTo")
+# )
+
+.libPaths("cache")
+
+library(stringi, include.only = c("stri_split_regex", "stri_match_first_regex", "stri_trans_totitle"))
+library(rvest, include.only = c("read_html", "html_nodes", "html_node", "html_text"))
+library(lubridate, include.only = c("year", "round_date", "parse_date_time", "year<-"))
+library(jsonlite, include.only = c("stream_out"))
+library(purrr, include.only = c("map", "map2", "set_names"))
+library(magrittr, include.only = c("%>%"))
+library(tibble, include.only = c("tibble"))
+library(tidyr, include.only = c("separate"))
+library(dplyr, include.only = c("mutate"))
+
+today <- as.character(Sys.Date())
+
+output_file <- path.expand(sprintf("docs/%s.json", today))
+latest_file <- path.expand("docs/latest.txt")
+
+latest_url <- sprintf("https://hrbrmstr.github.io/capitol-breach-scraper-and-data/%s.json", today)
 
 # get the DoJ Capitol Breach Cases page
 pg <- read_html("https://www.justice.gov/usao-dc/capitol-breach-cases")
@@ -67,8 +90,8 @@ html_nodes(tbl, xpath = ".//td[6]") %>%
   [[:digit:]]{1,2}/[[:digit:]]{1,2}                  # m/dd
 )
 ",
-case_insensitive = TRUE,
-comments = TRUE
+    case_insensitive = TRUE,
+    comments = TRUE
   ) %>%
   .[,2] -> d1
 
@@ -96,23 +119,23 @@ html_nodes(tbl, xpath = ".//td[6]") %>%
   [[:digit:]]{1,2}
 )
 ",
-case_insensitive = TRUE,
-comments = TRUE
+  case_insensitive = TRUE,
+  comments = TRUE
   ) %>%
   .[,2] -> d2
 
 # combine (replace NA slash date with verbose) and make a real date
 as.Date(
-  lubridate::parse_date_time(
+  parse_date_time(
     ifelse(is.na(d1), d2, d1),
     orders = c("mdY", "mdy", "md")
   )
 ) -> first_date
 
 # fix `0000` dates
-lubridate::year(first_date[!is.na(first_date) & lubridate::year(first_date) == 0]) <- 2021
-# fix DoJ year data entry issue
-lubridate::year(first_date[name == "BLACK, Joshua Matthew"]) <- 2021
+year(first_date[!is.na(first_date) & year(first_date) == 0]) <- 2021
+# fix DoJ year data entry issue (added 2021-08-18)
+year(first_date[name == "BLACK, Joshua Matthew"]) <- 2021
 
 # make a nice data frame
 tibble(
@@ -130,19 +153,17 @@ tibble(
   ) %>%
   mutate(
     state = stri_trans_totitle(state),
-    first_date_month = lubridate::round_date(first_date, "month")
-  )
-## # A tibble: 545 x 10
-##    case_num  case_link   name    charges case_doc_links state muni  first_date full_status   first_date_month
-##    <chr>     <chr>       <chr>   <list>  <list>         <chr> <chr> <date>     <chr>         <date>
-##  1 1:21-cr-… https://ww… ADAMS,… <chr [… <named list [… Ohio  Hill… 2021-03-09 "Arrested 3/… 2021-03-01
-##  2 1:21-cr-… https://ww… ALVEAR… <chr [… <named list [… Virg… East… 2021-02-11 "Charged via… 2021-02-01
-##  3 1:21-cr-… https://ww… ABUAL-… <chr [… <named list [… New … NA    2021-01-19 "Arrested 1/… 2021-02-01
-##  4 21-mj-353 https://ww… ADAMS … <chr [… <named list [… Illi… Spri… 2021-04-13 "Adams Jr. w… 2021-04-01
-##  5 1:21-cr-… https://ww… ADAMS,… <chr [… <named list [… Texas East… 2021-01-16 "Arrested 1/… 2021-01-01
-##  6 1:21-cr-… https://ww… ADAMS,… <chr [… <named list [… Flor… Edge… 2021-03-10 "Arrest date… 2021-03-01
-##  7 1:21-cr-… https://ww… ALAM, … <chr [… <named list [… Penn… East… 2021-01-30 "Arrested 1/… 2021-02-01
-##  8 1:21-cr-… https://ww… ALBERT… <chr [… <named list [… Mary… NA    2021-01-07 "Arrested on… 2021-01-01
-##  9 1:21-cr-… https://ww… ALFORD… <chr [… <named list [… Alab… Birm… 2021-03-29 "Arrested 3/… 2021-04-01
-## 10 1:21-cr-… https://ww… ALLAN,… <chr [… <named list [… Cali… Gran… 2021-01-22 "Arrested 1/… 2021-02-01
-## # … with 535 more rows
+    first_date_month = round_date(first_date, "month")
+  ) -> xdf
+
+# create a nice ndjson file
+stream_out(
+  x = xdf,
+  con = file(output_file),
+  verbose = FALSE
+)
+
+writeLines(
+  text = latest_url,
+  con = latest_file
+)
