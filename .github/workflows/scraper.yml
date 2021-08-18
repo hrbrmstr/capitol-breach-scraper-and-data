@@ -7,20 +7,16 @@ on:
 
 jobs:
   scheduled:
-    runs-on: ubuntu-latest
+    runs-on: macOS-latest
 
     steps:
     - name: Checkout repo
       uses: actions/checkout@v2
-
-    - name: Install Ubuntu dependencies
-      run: sudo apt install -y libcurl4-openssl-dev libgmp-dev libxml2-dev libglpk-dev libicu-dev
+      with:
+        fetch-depth: 0
 
     - name: Setup R
       uses: r-lib/actions/setup-r@v1
-      with:
-        r-version: "4.1.0"
-        http-user-agent: "R/4.1.0 R (4.1.0 x86_64-pc-linux-gnu x86_64 linux-gnu)"
 
     - name: Process DoJ Case Data
       run: R --silent --no-echo --file=doj-case-scraper.R
