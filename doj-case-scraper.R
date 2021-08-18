@@ -6,7 +6,7 @@
 needed <- c("stringi", "rvest", "lubridate", "jsonlite", "purrr", "magrittr", "tibble", "tidyr", "dplyr")
 cached <- list.files("./cache")
 
-to_resinstall <- setdiff(needed, cached)
+to_reinstall <- setdiff(needed, cached)
 
 # reinstall if any not there
 if (length(to_reinstall) > 0L) {
