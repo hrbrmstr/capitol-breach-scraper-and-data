@@ -1,20 +1,23 @@
-# Setup cache dir on a compatible Linux box with:
-#
-# .libPaths("cache", include.site = FALSE)
-# install.packages(
-#   pkgs = c("stringi", "rvest", "lubridate", "jsonlite", "purrr", "magrittr", "tibble", "tidyr", "dplyr"),
-#   lib = path.expand("./cache"),
-#   dependencies = c("Depends", "Imports", "LinkingTo")
-# )
+# Setup GH Action R pkg cache dir
 
 .libPaths("cache")
 
-install.packages(
-  pkgs = "stringi",
-  lib = path.expand("./cache"),
-  dependencies = c("Depends", "Imports", "LinkingTo")
-)
+# figure out what isn't cached
+needed <- c("stringi", "rvest", "lubridate", "jsonlite", "purrr", "magrittr", "tibble", "tidyr", "dplyr")
+cached <- list.files("./cache")
 
+to_resintall <- setdiff(needed, cached)
+
+# reinstall if any not there
+if (length(to_reinstall) > 0L) {
+  install.packages(
+    pkgs = to_reinstall,
+    lib = path.expand("./cache"),
+    dependencies = c("Depends", "Imports", "LinkingTo")
+  )
+}
+
+# go about business as usual
 library(stringi, include.only = c("stri_split_regex", "stri_match_first_regex", "stri_trans_totitle"))
 library(rvest, include.only = c("read_html", "html_nodes", "html_node", "html_text"))
 library(lubridate, include.only = c("year", "round_date", "parse_date_time", "year<-"))
