@@ -1,0 +1,23 @@
+---
+format: gfm
+---
+
+[![Daily scraper of DoJ Capitol Breach Cases](https://github.com/hrbrmstr/capitol-breach-scraper-and-data/actions/workflows/scraper.yml/badge.svg)](https://github.com/hrbrmstr/capitol-breach-scraper-and-data/actions/workflows/scraper.yml)
+
+# capitol-breach-scraper-and-data 
+
+R code & daily GH action to scrape the DoJ Capitol Breach Cases
+
+# Always read in the latest successful scrape
+
+```{r}
+jsonlite::stream_in(
+  url(
+    readLines(
+      "https://hrbrmstr.github.io/capitol-breach-scraper-and-data/latest.txt"
+    )
+  ),
+  verbose = FALSE
+) |>
+  dplyr::glimpse()
+```
