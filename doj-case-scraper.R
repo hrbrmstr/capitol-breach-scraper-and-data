@@ -5,7 +5,7 @@ install.packages(
 )
 
 # go about business as usual
-library(stringi, include.only = c("stri_split_regex", "stri_match_first_regex", "stri_trans_totitle"))
+library(stringi, include.only = c("stri_split_regex", "stri_match_first_regex", "stri_trim_both", "stri_trans_totitle"))
 library(rvest, include.only = c("read_html", "html_nodes", "html_node", "html_text"))
 library(lubridate, include.only = c("year", "round_date", "parse_date_time", "year<-"))
 library(jsonlite, include.only = c("stream_out"))
@@ -37,13 +37,16 @@ html_nodes(tbl, xpath = ".//td[2]") %>%
   html_text(trim = TRUE) -> name
 
 # extract DoJ link to the suspect case
-html_nodes(tbl, xpath = ".//td[2]/a/@href") %>%
-  html_text(trim = TRUE) %>%
+html_nodes(tbl, xpath = ".//td[2]") %>%
+  lapply(html_node, "a") %>%
+  sapply(html_attr, "href") %>%
+  stri_trim_both() %>%
   sprintf("https://www.justice.gov%s", .) -> case_link
 
 # extract the charges
-html_nodes(tbl, xpath = ".//td[3]") %>%
-  html_text(trim = TRUE) %>%
+html_nodes(tbl, xpath = ".//tbody/tr") %>%
+  lapply(html_node, xpath = ".//td[3]") %>%
+  sapply(html_text, trim=TRUE) %>%
   stri_split_regex(
     pattern = ";[[:space:]]*|\n+",
     multiline = TRUE
@@ -51,27 +54,36 @@ html_nodes(tbl, xpath = ".//td[3]") %>%
 
 # extract the case documents lists
 map2(
-  html_nodes(tbl, xpath = ".//td[4]") %>%
+
+  html_nodes(tbl, xpath = ".//tbody/tr") %>%
+    lapply(html_node, xpath = ".//td[4]") %>%
     map(html_nodes, xpath = ".//a/@href") %>%
     map(html_text),
-  html_nodes(tbl, xpath = ".//td[4]") %>%
+
+  html_nodes(tbl, xpath = ".//tbody/tr") %>%
+  lapply(html_node, xpath = ".//td[4]") %>%
     map(html_nodes, xpath = ".//a") %>%
     map(html_text),
+
   ~as.list(set_names(.x, .y))
+
 ) -> case_doc_links
 
 # extract suspect location
-html_nodes(tbl, xpath = ".//td[5]") %>%
-  html_text(trim = TRUE) -> location
+html_nodes(tbl, xpath = ".//tbody/tr") %>%
+  lapply(html_node, xpath = ".//td[5]") %>%
+  sapply(html_text, trim = TRUE) -> location
 
 # extract the entire status field (we'll grab the first action date below)
-html_nodes(tbl, xpath = ".//td[6]") %>%
-  html_text(trim = TRUE) -> full_status
+html_nodes(tbl, xpath = ".//tbody/tr") %>%
+  lapply(html_node, xpath = ".//td[6]") %>%
+  sapply(html_text, trim = TRUE) -> full_status
 
 # ugly code to get the first arrested|charged|indicted|surrendered action
 # get slashed-dates
-html_nodes(tbl, xpath = ".//td[6]") %>%
-  html_text(trim = TRUE) %>%
+html_nodes(tbl, xpath = ".//tbody/tr") %>%
+  lapply(html_node, xpath = ".//td[6]") %>%
+  sapply(html_text, trim = TRUE) |>
   stri_match_first_regex(
     pattern =
       "
@@ -92,8 +104,9 @@ html_nodes(tbl, xpath = ".//td[6]") %>%
   .[,2] -> d1
 
 # get verbose dates
-html_nodes(tbl, xpath = ".//td[6]") %>%
-  html_text(trim = TRUE) %>%
+html_nodes(tbl, xpath = ".//tbody/tr") %>%
+  lapply(html_node, xpath = ".//td[6]") %>%
+  sapply(html_text, trim = TRUE) %>%
   stri_match_first_regex(
     pattern =
       "
