@@ -6,7 +6,7 @@ install.packages(
 
 # go about business as usual
 library(stringi, include.only = c("stri_split_regex", "stri_match_first_regex", "stri_trim_both", "stri_trans_totitle"))
-library(rvest, include.only = c("read_html", "html_nodes", "html_node", "html_text"))
+library(rvest, include.only = c("read_html", "html_nodes", "html_node", "html_text", "html_attr"))
 library(lubridate, include.only = c("year", "round_date", "parse_date_time", "year<-"))
 library(jsonlite, include.only = c("stream_out"))
 library(purrr, include.only = c("map", "map2", "set_names"))
@@ -176,3 +176,4 @@ writeLines(
   text = latest_url,
   con = latest_file
 )
+
