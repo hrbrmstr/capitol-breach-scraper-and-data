@@ -15,6 +15,6 @@ readLines("./docs/latest.txt") |>
   basename() |> 
   sprintf("./docs/%s", x = _) |> 
   file() |> 
-  jsonlite::stream_in(verbose = FALSE`) |> 
+  jsonlite::stream_in(verbose = FALSE) |> 
   str(1)
 ```
