@@ -1,11 +1,12 @@
 # install pkg deps
 install.packages(
-  pkgs = c("rvest", "xml2", "jsonlite"),
+  pkgs = c("rvest", "xml2", "jsonlite", "stringi"),
   dependencies = c("Depends", "Imports", "LinkingTo")
 )
 
 # go about business as usual
 library(rvest)
+library(stringi)
 library(jsonlite, include.only = c("stream_out"))
 library(xml2)
 
@@ -27,6 +28,19 @@ data.frame(
   description = xml_find_all(items, ".//description") |> html_text() |> lapply(read_html) |> sapply(html_text),
   pubDate = xml_find_all(items, ".//pubDate") |> xml_text()
 ) -> xdf
+
+xdf$description |>
+  stri_split_lines() |>
+  lapply(stri_trim_both) |>
+  lapply(
+    \(.x) .x[nchar(.x) > 0]
+  ) -> xdf$description
+
+xdf$description |>
+  sapply(\(.x) {
+    grep("Location of arrest:", .x, value=TRUE)
+  }) |>
+  sub("Location of arrest: *", "", x=_) -> xdf$arrest_location
 
 # create a nice ndjson file
 stream_out(

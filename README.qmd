@@ -11,13 +11,10 @@ R code & daily GH action to scrape the DoJ Capitol Breach Cases
 # Always read in the latest successful scrape
 
 ```{r}
-jsonlite::stream_in(
-  url(
-    readLines(
-      "https://hrbrmstr.github.io/capitol-breach-scraper-and-data/latest.txt"
-    )
-  ),
-  verbose = FALSE
-) |>
-  dplyr::glimpse()
+readLines("./docs/latest.txt") |> 
+  basename() |> 
+  sprintf("./docs/%s", x = _) |> 
+  file() |> 
+  jsonlite::stream_in(verbose = FALSE`) |> 
+  str(1)
 ```
